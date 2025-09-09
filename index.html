@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Radar - Professional IP Address Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="glass-effect shadow-sm border-b border-gray-200">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-satellite-dish text-3xl text-blue-600"></i>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">IP Radar</h1>
+                </div>
+                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                    <i class="fas fa-shield-alt text-green-500"></i>
+                    <span>Secure & Free</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Input Section -->
+        <div class="max-w-2xl mx-auto mb-8">
+            <div class="glass-effect rounded-xl p-6 md:p-8">
+                <h2 class="text-xl md:text-2xl font-semibold text-gray-800 mb-4">Enter IP Address</h2>
+                <p class="text-gray-600 mb-6">Get detailed information about any IP address including location, ISP, and more.</p>
+                
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1">
+                        <input 
+                            type="text" 
+                            id="ipInput" 
+                            placeholder="e.g., 8.8.8.8"
+                            class="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors"
+                        >
+                    </div>
+                    <button 
+                        onclick="lookupIP()" 
+                        id="lookupBtn"
+                        class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 font-medium"
+                    >
+                        <i class="fas fa-search"></i>
+                        <span>Scan</span>
+                    </button>
+                </div>
+                
+                <div class="mt-4 flex items-center space-x-2 text-sm text-gray-600">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Leave empty to check your own IP address</span>
+                </div>
+                
+                <div class="mt-4 flex items-center space-x-2 text-sm text-gray-600">
+                    <i class="fas fa-wifi"></i>
+                    <span>Your IP: <span id="userIP" class="font-mono font-semibold text-blue-600">Loading...</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden max-w-4xl mx-auto">
+            <div class="glass-effect rounded-xl p-8 text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p class="text-gray-700 font-medium">Scanning IP information...</p>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden max-w-4xl mx-auto">
+            <div class="glass-effect rounded-xl p-6 md:p-8">
+                <!-- IP Header -->
+                <div class="mb-6 text-center">
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">IP Scan Results</h3>
+                    <p class="text-gray-600">Comprehensive information about <span id="displayedIP" class="font-mono font-semibold text-blue-600"></span></p>
+                </div>
+
+                <!-- Info Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- ISP Info -->
+                    <div class="info-card rounded-xl p-5">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-building text-2xl text-blue-600 mr-3"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">ISP Details</h4>
+                        </div>
+                        <div class="space-y-2 text-gray-700">
+                            <p><span class="font-medium">ISP:</span> <span id="org">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Location Info -->
+                    <div class="info-card rounded-xl p-5">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-map-marker-alt text-2xl text-blue-600 mr-3"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Location</h4>
+                        </div>
+                        <div class="space-y-2 text-gray-700">
+                            <p><span class="font-medium">Country:</span> <span id="country">-</span></p>
+                            <p><span class="font-medium">Region:</span> <span id="region">-</span></p>
+                            <p><span class="font-medium">City:</span> <span id="city">-</span></p>
+                            <p><span class="font-medium">Postal Code:</span> <span id="postal">-</span></p>
+                            <p><span class="font-medium">Timezone:</span> <span id="timezone">-</span></p>
+                            <p><span class="font-medium">Current Time:</span> <span id="currentTime">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Coordinates -->
+                    <div class="info-card rounded-xl p-5 md:col-span-2">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-globe text-2xl text-blue-600 mr-3"></i>
+                            <h4 class="text-lg font-semibold text-gray-800">Coordinates</h4>
+                        </div>
+                        <div class="space-y-2 text-gray-700">
+                            <p><span class="font-medium">Latitude:</span> <span id="lat">-</span></p>
+                            <p><span class="font-medium">Longitude:</span> <span id="lon">-</span></p>
+                            <p class="text-sm mt-3">
+                                <a id="mapLink" href="#" target="_blank" class="text-blue-600 hover:text-blue-700 underline">
+                                    <i class="fas fa-external-link-alt mr-1"></i>View on OpenStreetMap
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Preview -->
+                <div class="mt-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">Location Map</h4>
+                    <div id="mapContainer" class="shadow-lg"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex flex-wrap gap-3 justify-center">
+                    <button onclick="copyResults()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2">
+                        <i class="fas fa-copy"></i>
+                        <span>Copy Results</span>
+                    </button>
+                    <button onclick="shareResults()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                        <i class="fas fa-share-alt"></i>
+                        <span>Share</span>
+                    </button>
+                    <button onclick="lookupIP()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                        <i class="fas fa-redo"></i>
+                        <span>Rescan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden max-w-2xl mx-auto">
+            <div class="glass-effect rounded-xl p-8 text-center">
+                <i class="fas fa-exclamation-triangle text-5xl text-red-500 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Oops! Something went wrong</h3>
+                <p id="errorMessage" class="text-gray-600 mb-4"></p>
+                <button onclick="resetForm()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Try Again
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-6 bg-white border-t border-gray-200">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-700 text-lg font-medium">
+                Made with <i class="fas fa-heart text-red-500"></i> by Sauravhhh
+            </p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
